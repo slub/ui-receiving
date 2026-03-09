@@ -54,8 +54,7 @@ import {
 } from '../Piece';
 import { useFieldArrowNavigation } from './useFieldArrowNavigation';
 
-const visibleColumns = [
-  'checked',
+const defaultVisibleColumns = [
   PIECE_COLUMNS.displaySummary,
   PIECE_COLUMNS.enumeration,
   PIECE_COLUMNS.chronology,
@@ -79,7 +78,8 @@ const barcodeFieldName = (field, index) => `${field}[${index}].barcode`;
 const callNumberFieldName = (field, index) => `${field}[${index}].callNumber`;
 
 const columnWidths = {
-  location: '250px',
+  checked: '34px',
+  [PIECE_COLUMNS.location]: '250px',
 };
 
 const getResultFormatter = ({
@@ -302,6 +302,7 @@ export const TitleReceiveList = ({ fields, props }) => {
     toggleCheckedAll = defaultListProps.toggleCheckedAll,
     locations = defaultListProps.locations,
     poLineLocationIds = defaultListProps.poLineLocationIds,
+    visibleColumns: visibleColumnsProp = defaultVisibleColumns,
   } = props || {};
 
   const intl = useIntl();
@@ -357,7 +358,7 @@ export const TitleReceiveList = ({ fields, props }) => {
   }), [onFieldKeyDown]);
 
   const visibleColumnsWithActions = useMemo(() => {
-    const vcwa = [...visibleColumns];
+    const vcwa = ['checked', ...visibleColumnsProp];
 
     if (
       numberGeneratorData[ACCESSION_NUMBER_SETTING] === GENERATOR_ON ||
@@ -372,7 +373,7 @@ export const TitleReceiveList = ({ fields, props }) => {
     }
 
     return vcwa;
-  }, [numberGeneratorData]);
+  }, [numberGeneratorData, visibleColumnsProp]);
 
   return (
     <>
@@ -385,6 +386,8 @@ export const TitleReceiveList = ({ fields, props }) => {
         id="title-receive-list"
         interactive={false}
         loading={isLoading}
+        autosize
+        stickyFirstColumn
         totalCount={fields.value.length}
         visibleColumns={visibleColumnsWithActions}
       />
@@ -423,6 +426,7 @@ TitleReceiveList.propTypes = {
     toggleCheckedAll: PropTypes.func.isRequired,
     poLineLocationIds: PropTypes.arrayOf(PropTypes.string),
     locations: PropTypes.arrayOf(PropTypes.object),
+    visibleColumns: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
 };
 

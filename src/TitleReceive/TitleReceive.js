@@ -1,5 +1,6 @@
+import omit from 'lodash/omit';
 import PropTypes from 'prop-types';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { FieldArray } from 'react-final-form-arrays';
 
 import stripesFinalForm from '@folio/stripes/final-form';
@@ -13,13 +14,28 @@ import {
   Paneset,
 } from '@folio/stripes/components';
 import {
+  ColumnManagerMenu,
+  useColumnManager,
+} from '@folio/stripes/smart-components';
+import {
   FormFooter,
   handleKeyCommand,
 } from '@folio/stripes-acq-components';
 
 import { LineLocationsView } from '../common/components';
 import { setLocationValueFormMutator } from '../common/utils';
+import {
+  PIECE_COLUMNS,
+  RECEIVE_PIECE_COLUMN_MAPPING,
+} from '../Piece';
 import { TitleReceiveList } from './TitleReceiveList';
+
+const MANDATORY_COLUMNS = [
+  PIECE_COLUMNS.displaySummary,
+  PIECE_COLUMNS.format,
+  PIECE_COLUMNS.receiptDate,
+  PIECE_COLUMNS.location,
+];
 
 const FIELD_NAME = 'receivedItems';
 
@@ -41,6 +57,23 @@ const TitleReceive = ({
   submitting,
   values,
 }) => {
+  const {
+    visibleColumns,
+    toggleColumn,
+  } = useColumnManager('receive-pieces-column-manager', RECEIVE_PIECE_COLUMN_MAPPING);
+
+  const renderActionMenu = useCallback(
+    () => (
+      <ColumnManagerMenu
+        prefix="receive-pieces"
+        columnMapping={omit(RECEIVE_PIECE_COLUMN_MAPPING, MANDATORY_COLUMNS)}
+        visibleColumns={visibleColumns}
+        toggleColumn={toggleColumn}
+      />
+    ),
+    [visibleColumns, toggleColumn],
+  );
+
   const isReceiveDisabled = useMemo(() => {
     return isLoading || (isPiecesChunksExhausted && !values[FIELD_NAME].some(({ checked }) => checked));
   }, [isLoading, isPiecesChunksExhausted, values]);
@@ -92,6 +125,7 @@ const TitleReceive = ({
       >
         <Paneset>
           <Pane
+            actionMenu={renderActionMenu}
             defaultWidth="fill"
             dismissible
             footer={paneFooter}
@@ -100,34 +134,39 @@ const TitleReceive = ({
             paneTitle={paneTitle}
             paneSub={paneSub}
           >
-            <LineLocationsView
-              crossTenant={crossTenant}
-              instanceId={instanceId}
-              poLine={poLine}
-              locations={locations}
-            />
-            {receivingNote && (
-              <Layout className="marginTopHalf">
-                <MessageBanner>
-                  {receivingNote}
-                </MessageBanner>
-              </Layout>
-            )}
-            <FieldArray
-              component={TitleReceiveList}
-              id="receivedItems"
-              name={FIELD_NAME}
-              props={{
-                createInventoryValues,
-                crossTenant,
-                instanceId,
-                isLoading,
-                locations,
-                poLineLocationIds,
-                selectLocation: form.mutators.setLocationValue,
-                toggleCheckedAll: form.mutators.toggleCheckedAll,
-              }}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <LineLocationsView
+                crossTenant={crossTenant}
+                instanceId={instanceId}
+                poLine={poLine}
+                locations={locations}
+              />
+              {receivingNote && (
+                <Layout className="marginTopHalf">
+                  <MessageBanner>
+                    {receivingNote}
+                  </MessageBanner>
+                </Layout>
+              )}
+              <div style={{ flex: 1, minHeight: 0 }}>
+                <FieldArray
+                  component={TitleReceiveList}
+                  id="receivedItems"
+                  name={FIELD_NAME}
+                  props={{
+                    createInventoryValues,
+                    crossTenant,
+                    instanceId,
+                    isLoading,
+                    locations,
+                    poLineLocationIds,
+                    selectLocation: form.mutators.setLocationValue,
+                    toggleCheckedAll: form.mutators.toggleCheckedAll,
+                    visibleColumns,
+                  }}
+                />
+              </div>
+            </div>
           </Pane>
         </Paneset>
       </HasCommand>

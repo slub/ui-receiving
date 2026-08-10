@@ -6,6 +6,7 @@ import {
 
 export const RECEIVING_COLUMNS = {
   TITLE: 'title',
+  VENDOR: 'vendor',
   EXPECTED_RECEIPT_DATE: 'poLine.physical.expectedReceiptDate',
   TITLE_OR_PACKAGE: 'poLine.titleOrPackage',
   PO_LINE_NUMBER: 'poLine.poLineNumber',
@@ -16,6 +17,7 @@ export const RECEIVING_COLUMNS = {
 
 export const RECEIVING_VISIBLE_COLUMNS = [
   RECEIVING_COLUMNS.TITLE,
+  RECEIVING_COLUMNS.VENDOR,
   RECEIVING_COLUMNS.EXPECTED_RECEIPT_DATE,
   RECEIVING_COLUMNS.TITLE_OR_PACKAGE,
   RECEIVING_COLUMNS.PO_LINE_NUMBER,
@@ -28,6 +30,7 @@ export const RECEIVING_MANDATORY_COLUMNS = [RECEIVING_COLUMNS.TITLE];
 
 export const RECEIVING_COLUMN_MAPPING = {
   [RECEIVING_COLUMNS.TITLE]: <FormattedMessage id="ui-receiving.titles.title" />,
+  [RECEIVING_COLUMNS.VENDOR]: <FormattedMessage id="ui-receiving.title.vendor" />,
   [RECEIVING_COLUMNS.EXPECTED_RECEIPT_DATE]: <FormattedMessage id="ui-receiving.title.expectedReceiptDate" />,
   [RECEIVING_COLUMNS.TITLE_OR_PACKAGE]: <FormattedMessage id="ui-receiving.title.package" />,
   [RECEIVING_COLUMNS.PO_LINE_NUMBER]: <FormattedMessage id="ui-receiving.title.polNumber" />,

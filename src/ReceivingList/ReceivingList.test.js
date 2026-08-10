@@ -99,6 +99,16 @@ describe('Given Receiving List', () => {
     });
   });
 
+  it('Than it should display the vendor name as the second column', () => {
+    renderReceivingList({
+      titles: [{ title: 'Title with a vendor', poLine: { vendor: 'Amazon.com' } }],
+      titlesCount: 1,
+    });
+
+    expect(screen.getAllByRole('columnheader')[1]).toHaveTextContent('ui-receiving.title.vendor');
+    expect(screen.getByText('Amazon.com')).toBeInTheDocument();
+  });
+
   it('should handle default props and render empty list', () => {
     renderReceivingList({
       isLoading: undefined,

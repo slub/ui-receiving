@@ -18,6 +18,7 @@ import {
   fetchLinesOrders,
   fetchOrderLineHoldings,
   fetchOrderLineLocations,
+  fetchOrdersVendors,
   fetchTitleOrderLines,
 } from './utils';
 
@@ -59,6 +60,7 @@ const ReceivingListContainer = () => {
       {},
     );
     const linesOrdersResponse = await fetchLinesOrders(ky, orderLinesResponse, {});
+    const vendorsResponse = await fetchOrdersVendors(ky, linesOrdersResponse);
 
     const locationsMap = locationsResponse.reduce((acc, locationItem) => {
       acc[locationItem.id] = locationItem;
@@ -78,6 +80,12 @@ const ReceivingListContainer = () => {
       return acc;
     }, {});
 
+    const vendorsMap = vendorsResponse.reduce((acc, vendor) => {
+      acc[vendor.id] = vendor;
+
+      return acc;
+    }, {});
+
     const orderLinesMap = orderLinesResponse.reduce((acc, orderLine) => {
       acc[orderLine.id] = {
         ...orderLine,
@@ -92,6 +100,7 @@ const ReceivingListContainer = () => {
           return origLocation?.name ?? invalidReferenceMessage;
         }),
         orderWorkflow: ordersMap[orderLine.purchaseOrderId]?.workflowStatus,
+        vendor: vendorsMap[ordersMap[orderLine.purchaseOrderId]?.vendor]?.name,
       };
 
       return acc;

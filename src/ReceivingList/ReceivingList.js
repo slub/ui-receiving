@@ -74,6 +74,7 @@ const resultsPaneTitle = <FormattedMessage id="ui-receiving.meta.title" />;
 
 const getResultsFormatter = ({ isCentralRouting, search }) => ({
   'title': data => <TextLink to={`${isCentralRouting ? CENTRAL_RECEIVING_ROUTE : RECEIVING_ROUTE}/${data.id}/view${search}`}>{data.title}</TextLink>,
+  'vendor': data => get(data, 'poLine.vendor') || <NoValue />,
   'poLine.physical.expectedReceiptDate': data => <FolioFormattedDate value={get(data, 'poLine.physical.expectedReceiptDate')} />,
   'poLine.titleOrPackage': data => (get(data, 'poLine.isPackage') ? get(data, 'poLine.titleOrPackage') : <NoValue />),
   'poLine.poLineNumber': data => get(data, 'poLine.poLineNumber'),

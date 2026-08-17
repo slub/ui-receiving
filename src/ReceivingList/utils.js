@@ -205,7 +205,7 @@ export const fetchLinesOrders = (ky, lines, fetchedOrdersMap) => {
 };
 
 export const fetchOrdersVendors = (ky, orders) => {
-  const vendorIds = uniq(orders.map(({ vendor }) => vendor).filter(Boolean));
+  const vendorIds = [...new Set(orders.map(({ vendor }) => vendor).filter(Boolean))];
 
   return batchRequest(
     ({ params: searchParams }) => (

@@ -6,6 +6,7 @@ import {
   LINES_API,
   LOCATIONS_API,
   ORDER_FORMATS,
+  VENDORS_API,
 } from '@folio/stripes-acq-components';
 
 import {
@@ -19,6 +20,7 @@ import {
   fetchTitleOrderLines,
   fetchOrderLineHoldings,
   fetchOrderLineLocations,
+  fetchOrdersVendors,
   buildTitlesQuery,
 } from './utils';
 
@@ -196,6 +198,35 @@ describe('ReceivingList utils', () => {
           expect(ky.get).not.toHaveBeenCalled();
           expect(response).toEqual([]);
         });
+    });
+  });
+
+  describe('fetchOrdersVendors', () => {
+    it('should make a request with unique vendor ids', async () => {
+      const ky = {
+        get: jest.fn(() => ({
+          json: () => Promise.resolve({ organizations: [] }),
+        })),
+      };
+      const orders = [{ vendor: 1 }, { vendor: 2 }, { vendor: 2 }];
+
+      await fetchOrdersVendors(ky, orders);
+
+      expect(ky.get).toHaveBeenCalledWith(VENDORS_API, expect.objectContaining({
+        searchParams: {
+          limit: LIMIT_MAX,
+          query: 'id==1 or id==2',
+        },
+      }));
+    });
+
+    it('should not make a request when orders have no vendor', async () => {
+      const ky = { get: jest.fn() };
+
+      const response = await fetchOrdersVendors(ky, [{}]);
+
+      expect(ky.get).not.toHaveBeenCalled();
+      expect(response).toEqual([]);
     });
   });
 

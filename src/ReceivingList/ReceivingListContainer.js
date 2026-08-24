@@ -18,6 +18,7 @@ import {
   fetchLinesOrders,
   fetchOrderLineHoldings,
   fetchOrderLineLocations,
+  fetchOrdersVendors,
   fetchTitleOrderLines,
 } from './utils';
 
@@ -38,27 +39,45 @@ const ReceivingListContainer = () => {
   const fetchReferences = useCallback(async (titles, ky) => {
     const orderLinesResponse = await fetchTitleOrderLines(ky, titles, {});
 
-    const holdingsResponse = await (
-      crossTenant
-        ? fetchConsortiumOrderLineHoldings(ky, stripes)
-        : fetchOrderLineHoldings(ky)
-    )(orderLinesResponse);
+    const fetchHoldingsAndLocations = async () => {
+      const holdingsResponse = await (
+        crossTenant
+          ? fetchConsortiumOrderLineHoldings(ky, stripes)
+          : fetchOrderLineHoldings(ky)
+      )(orderLinesResponse);
 
-    const locationsResponse = await (
-      crossTenant
-        ? fetchConsortiumOrderLineLocations(ky, stripes)
-        : fetchOrderLineLocations(ky)
-    )(
-      [
-        ...orderLinesResponse,
-        ...holdingsResponse
-          .map(({ permanentLocationId: locationId }) => ({
-            locations: [{ locationId }],
-          })),
-      ],
-      {},
-    );
-    const linesOrdersResponse = await fetchLinesOrders(ky, orderLinesResponse, {});
+      const locationsResponse = await (
+        crossTenant
+          ? fetchConsortiumOrderLineLocations(ky, stripes)
+          : fetchOrderLineLocations(ky)
+      )(
+        [
+          ...orderLinesResponse,
+          ...holdingsResponse
+            .map(({ permanentLocationId: locationId }) => ({
+              locations: [{ locationId }],
+            })),
+        ],
+        {},
+      );
+
+      return { holdingsResponse, locationsResponse };
+    };
+
+    const fetchOrdersAndVendors = async () => {
+      const linesOrdersResponse = await fetchLinesOrders(ky, orderLinesResponse, {});
+      const vendorsResponse = await fetchOrdersVendors(ky, linesOrdersResponse);
+
+      return { linesOrdersResponse, vendorsResponse };
+    };
+
+    const [
+      { holdingsResponse, locationsResponse },
+      { linesOrdersResponse, vendorsResponse },
+    ] = await Promise.all([
+      fetchHoldingsAndLocations(),
+      fetchOrdersAndVendors(),
+    ]);
 
     const locationsMap = locationsResponse.reduce((acc, locationItem) => {
       acc[locationItem.id] = locationItem;
@@ -78,6 +97,12 @@ const ReceivingListContainer = () => {
       return acc;
     }, {});
 
+    const vendorsMap = vendorsResponse.reduce((acc, vendor) => {
+      acc[vendor.id] = vendor;
+
+      return acc;
+    }, {});
+
     const orderLinesMap = orderLinesResponse.reduce((acc, orderLine) => {
       acc[orderLine.id] = {
         ...orderLine,
@@ -92,6 +117,7 @@ const ReceivingListContainer = () => {
           return origLocation?.name ?? invalidReferenceMessage;
         }),
         orderWorkflow: ordersMap[orderLine.purchaseOrderId]?.workflowStatus,
+        vendor: vendorsMap[ordersMap[orderLine.purchaseOrderId]?.vendor]?.name,
       };
 
       return acc;

@@ -18,6 +18,7 @@ import {
   LINES_API,
   LOCATIONS_API,
   ORDERS_API,
+  VENDORS_API,
 } from '@folio/stripes-acq-components';
 
 import { BATCH_IDENTIFIER_TYPE } from '../common/constants';
@@ -201,4 +202,17 @@ export const fetchLinesOrders = (ky, lines, fetchedOrdersMap) => {
       uniq(unfetched),
     )
     : Promise.resolve([]);
+};
+
+export const fetchOrdersVendors = (ky, orders) => {
+  const vendorIds = [...new Set(orders.map(({ vendor }) => vendor).filter(Boolean))];
+
+  return batchRequest(
+    ({ params: searchParams }) => (
+      ky.get(VENDORS_API, { searchParams })
+        .json()
+        .then(({ organizations }) => organizations)
+    ),
+    vendorIds,
+  );
 };

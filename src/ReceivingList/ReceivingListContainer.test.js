@@ -12,6 +12,7 @@ import {
   fetchLinesOrders,
   fetchOrderLineHoldings,
   fetchOrderLineLocations,
+  fetchOrdersVendors,
   fetchTitleOrderLines,
 } from './utils';
 
@@ -29,6 +30,7 @@ jest.mock('./utils', () => ({
   fetchLinesOrders: jest.fn(),
   fetchOrderLineHoldings: jest.fn(),
   fetchOrderLineLocations: jest.fn(),
+  fetchOrdersVendors: jest.fn(),
   fetchTitleOrderLines: jest.fn(),
 }));
 
@@ -44,6 +46,24 @@ describe('ReceivingListContainer', () => {
     title: 'Multi-line titles #2',
     poLineId: '3e1a947f-a605-41b8-839c-7929f02ef911',
   }];
+  const vendor = {
+    id: 'e0fb5df2-cdf1-11e8-a8d5-f2801f1b9fd1',
+    name: 'Amazon.com',
+  };
+  const order = {
+    id: '17d5d47c-19a4-4ba0-b6bf-2b8f5e6c4e11',
+    vendor: vendor.id,
+    workflowStatus: 'Open',
+  };
+  const location = {
+    id: '758258bc-ecc1-41b8-abca-f7b610822ffd',
+    name: 'Main Library',
+  };
+  const orderLine = {
+    id: titles[0].poLineId,
+    purchaseOrderId: order.id,
+    locations: [{ locationId: location.id }],
+  };
 
   beforeEach(() => {
     fetchConsortiumOrderLineHoldings
@@ -61,6 +81,9 @@ describe('ReceivingListContainer', () => {
     fetchOrderLineLocations
       .mockClear()
       .mockReturnValue(() => []);
+    fetchOrdersVendors
+      .mockClear()
+      .mockReturnValue([]);
     fetchTitleOrderLines
       .mockClear()
       .mockReturnValue([]);
@@ -83,5 +106,21 @@ describe('ReceivingListContainer', () => {
     expect(fetchTitleOrderLines).toHaveBeenCalled();
     expect(fetchLinesOrders).toHaveBeenCalled();
     expect(fetchOrderLineLocations).toHaveBeenCalled();
+  });
+
+  it('should resolve vendor and location names of the fetched order lines', async () => {
+    fetchTitleOrderLines.mockReturnValue([orderLine]);
+    fetchOrderLineLocations.mockReturnValue(() => [location]);
+    fetchLinesOrders.mockReturnValue([order]);
+    fetchOrdersVendors.mockReturnValue([vendor]);
+
+    renderReceivingListContainer();
+
+    const { orderLinesMap } = await useReceiving.mock.calls[0][0].fetchReferences(titles);
+
+    expect(orderLinesMap[orderLine.id]).toEqual(expect.objectContaining({
+      locations: [location.name],
+      vendor: vendor.name,
+    }));
   });
 });

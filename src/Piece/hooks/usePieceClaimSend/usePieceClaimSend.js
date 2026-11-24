@@ -1,29 +1,36 @@
 import noop from 'lodash/noop';
 import {
   useCallback,
+  useMemo,
   useRef,
   useState,
 } from 'react';
-import { FormattedMessage } from 'react-intl';
+import { useIntl } from 'react-intl';
 
 import {
-  DATA_EXPORT_CONFIGS_API,
-  FOLIO_EXPORT_TYPE,
-  getClaimingIntervalFromDate,
+  getAcqMethodLabel,
   PIECE_STATUS,
+  useAcquisitionMethods,
   useClaimsSend,
   useModalToggle,
+  useOrganization,
   usePiecesStatusBatchUpdate,
 } from '@folio/stripes-acq-components';
-import { useOkapiKy } from '@folio/stripes/core';
+
+const DEFAULT_CLAIMS = [];
 
 export const usePieceClaimSend = (options = {}) => {
-  const { organizationId, tenantId } = options;
+  const {
+    order,
+    orderLine,
+    piece,
+    tenantId,
+    title,
+  } = options;
 
-  const ky = useOkapiKy({ tenant: tenantId });
+  const intl = useIntl();
   const confirmClaimSendPromise = useRef(Promise);
   const [isClaimSendModalOpen, toggleClaimSendModal] = useModalToggle();
-  const [isIntegrationExists, setIsIntegrationExists] = useState();
   const [claimSendModalProps, setClaimSendModalProps] = useState({});
 
   /* Callback to handle claim send after form submit */
@@ -41,27 +48,30 @@ export const usePieceClaimSend = (options = {}) => {
 
   const isLoading = isClaimSendLoading || isUpdatePiecesStatusLoading;
 
-  const checkIntegrationExistance = useCallback(async () => {
-    const searchParams = {
-      query: `configName==${FOLIO_EXPORT_TYPE.CLAIMS}_${organizationId}*`,
-    };
+  /* Names for the "no matching integration" warning of the modal, only needed while it is open */
+  const { organization } = useOrganization(order?.vendor, { enabled: isClaimSendModalOpen, tenantId });
+  const { acquisitionMethods } = useAcquisitionMethods({ enabled: isClaimSendModalOpen, tenantId });
 
-    return ky.get(DATA_EXPORT_CONFIGS_API, { searchParams })
-      .json()
-      .then(({ configs }) => configs.length > 0)
-      .catch(() => false);
-  }, [ky, organizationId]);
+  /* The piece as the "Send claims" modal needs it to tell how the piece will be claimed */
+  const claims = useMemo(() => {
+    if (!piece?.id) return DEFAULT_CLAIMS;
+
+    const acquisitionMethod = acquisitionMethods.find(({ id }) => id === orderLine?.acquisitionMethod);
+
+    return [{
+      ...piece,
+      title: title?.title,
+      vendorId: order?.vendor,
+      vendorCode: organization?.code,
+      vendorName: organization?.name,
+      acquisitionMethod: orderLine?.acquisitionMethod,
+      acquisitionMethodName: acquisitionMethod && getAcqMethodLabel(acquisitionMethod, { intl }),
+      claimSequenceId: orderLine?.claimSequenceId,
+    }];
+  }, [acquisitionMethods, intl, order?.vendor, orderLine, organization, piece, title?.title]);
 
   /* Trigger "Send claims" modal rendering with dynamic props */
-  const onClaimSend = useCallback(async ({ internalNote, externalNote }) => {
-    const isExists = await checkIntegrationExistance();
-    const message = (
-      <FormattedMessage
-        id={`ui-receiving.piece.sendClaim.${isExists ? 'withIntegration' : 'withoutIntegration'}.message`}
-      />
-    );
-
-    setIsIntegrationExists(isExists);
+  const onClaimSend = useCallback(({ internalNote, externalNote }) => {
     toggleClaimSendModal();
 
     return new Promise((resolve, reject) => {
@@ -69,34 +79,35 @@ export const usePieceClaimSend = (options = {}) => {
 
       setClaimSendModalProps({
         initialValues: { internalNote, externalNote },
-        message,
       });
     });
-  }, [checkIntegrationExistance, toggleClaimSendModal]);
+  }, [toggleClaimSendModal]);
 
   /* Resolves the "Send claims" modal promise and set the "sendClaimsHandler" callback to handle after form submit */
   const onConfirmClaimSend = useCallback(({
-    claimingDate,
+    claimingInterval,
     externalNote,
     internalNote,
+    statusOnlyPieceIds,
   }) => {
-    const claimingInterval = getClaimingIntervalFromDate(claimingDate);
+    // Without a matching integration nothing is sent, the piece only gets the "Claim sent" status
+    const isStatusOnly = Boolean(statusOnlyPieceIds?.length);
 
     const callback = async ({ id }) => {
-      const result = isIntegrationExists
-        ? await sendClaims({
-          data: {
-            claimingInterval,
-            claimingPieceIds: [id],
-            internalNote,
-            externalNote,
-          },
-        })
-        : await updatePiecesStatus({
+      const result = isStatusOnly
+        ? await updatePiecesStatus({
           data: {
             claimingInterval,
             pieceIds: [id],
             receivingStatus: PIECE_STATUS.claimSent,
+            internalNote,
+            externalNote,
+          },
+        })
+        : await sendClaims({
+          data: {
+            claimingInterval,
+            claimingPieceIds: [id],
             internalNote,
             externalNote,
           },
@@ -113,13 +124,14 @@ export const usePieceClaimSend = (options = {}) => {
       externalNote,
       internalNote,
     });
-  }, [isIntegrationExists, sendClaims, toggleClaimSendModal, updatePiecesStatus]);
+  }, [sendClaims, toggleClaimSendModal, updatePiecesStatus]);
 
   const onCancelClaimSend = useCallback(() => {
     toggleClaimSendModal();
   }, [toggleClaimSendModal]);
 
   return {
+    claims,
     claimSendModalProps,
     isClaimSendModalOpen,
     onCancelClaimSend,

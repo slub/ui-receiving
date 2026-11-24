@@ -128,6 +128,7 @@ export const PieceFormContainer = ({
   const { onQuickReceive } = usePieceQuickReceiving({ tenantId });
 
   const {
+    claims,
     claimSendModalProps,
     isClaimSendModalOpen,
     isLoading: isClaimSendLoading,
@@ -136,8 +137,11 @@ export const PieceFormContainer = ({
     onConfirmClaimSend,
     sendClaimsHandler,
   } = usePieceClaimSend({
-    organizationId: order?.vendor,
+    order,
+    orderLine,
+    piece: initialValues,
     tenantId,
+    title,
   });
 
   /* Constants */
@@ -390,10 +394,15 @@ export const PieceFormContainer = ({
       />
 
       <SendClaimsModal
+        allowNoIntegration
+        allowNotLate
+        claims={claims}
         disabled={isClaimSendLoading}
+        isSinglePiece
         onCancel={onCancelClaimSend}
         onSubmit={onConfirmClaimSend}
         open={isClaimSendModalOpen}
+        tenantId={tenantId}
         {...claimSendModalProps}
       />
     </>

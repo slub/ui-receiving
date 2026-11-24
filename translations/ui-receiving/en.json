@@ -272,8 +272,6 @@
   "piece.statusChangeLog.column.interval": "Interval",
   "piece.statusChangeLog.column.status": "Status change",
   "piece.statusChangeLog.column.updatedBy": "Updated by",
-  "piece.sendClaim.withIntegration.message": "This will generate a claim job which can be viewed in Export manager. Continue?",
-  "piece.sendClaim.withoutIntegration.message": "No claiming integration exists for this organization. Piece will be set to \"Claim sent\" status. Continue?",
   "piece.supplement": "Supplement",
   "piece.title": "Title",
   "piece.delete.confirm": "Confirm",

@@ -31,6 +31,7 @@ import {
   DeleteHoldingsModal,
   getClaimingIntervalFromDate,
   handleKeyCommand,
+  ORDER_FORMATS,
   ORDER_STATUSES,
   PIECE_FORMAT,
   PIECE_STATUS,
@@ -47,7 +48,11 @@ import {
   PIECE_FORM_FIELD_NAMES,
 } from '../../common/constants';
 import { useAsyncConfirmationModal } from '../../common/hooks';
-import { setLocationValueFormMutator } from '../../common/utils';
+import {
+  getPieceExpectedReceiptDate,
+  getUTCDay,
+  setLocationValueFormMutator,
+} from '../../common/utils';
 import {
   PIECE_ACTION_NAMES,
   PIECE_FORM_SERVICE_FIELD_NAMES,
@@ -118,6 +123,23 @@ const PieceForm = ({
       });
     }
   }, [batch, change, format, id]);
+
+  // For P/E mix the format is chosen in the form: the date follows it unless it was edited manually
+  useEffect(() => {
+    if (id || !format || poLine?.orderFormat !== ORDER_FORMATS.PEMix) return;
+
+    // Compared by day: the datepicker rewrites a changed value as a plain date
+    const currentDay = getUTCDay(getState().values[PIECE_FORM_FIELD_NAMES.receiptDate]);
+    const expectedDate = getPieceExpectedReceiptDate(poLine, format);
+    const isPrefilledDate = !currentDay || [
+      getUTCDay(poLine.physical?.expectedReceiptDate),
+      getUTCDay(poLine.eresource?.expectedActivation),
+    ].includes(currentDay);
+
+    if (isPrefilledDate && currentDay !== getUTCDay(expectedDate)) {
+      change(PIECE_FORM_FIELD_NAMES.receiptDate, expectedDate);
+    }
+  }, [change, format, getState, id, poLine]);
 
   const [isDeleteConfirmation, toggleDeleteConfirmation] = useModalToggle();
   const [isDeleteHoldingsConfirmation, toggleDeleteHoldingsConfirmation] = useModalToggle();

@@ -69,6 +69,7 @@ import {
   useAsyncConfirmationModal,
   useRemoveFromPackage,
 } from '../common/hooks';
+import { getPoLineExpectedReceiptDate } from '../common/utils';
 import {
   CENTRAL_RECEIVING_PIECE_CREATE_ROUTE,
   CENTRAL_RECEIVING_PIECE_EDIT_ROUTE,
@@ -143,7 +144,7 @@ const TitleDetails = ({
     targetTenantId,
   } = useReceivingSearchContext();
 
-  const { id: poLineId, physical, poLineNumber, checkinItems, orderFormat, requester, rush } = poLine;
+  const { id: poLineId, poLineNumber, checkinItems, orderFormat, requester, rush } = poLine;
   const titleId = title.id;
   const connectedTasksJobsProps = {
     recordId: titleId,
@@ -563,7 +564,7 @@ const TitleDetails = ({
                 orderType={order.orderType}
                 poLineId={poLineId}
                 poLineNumber={poLineNumber}
-                expectedReceiptDate={physical?.expectedReceiptDate}
+                expectedReceiptDate={getPoLineExpectedReceiptDate(poLine)}
                 receivingNote={receivingNote}
                 requester={requester}
                 rush={rush}

@@ -46,6 +46,7 @@ import {
 
 import { RemoveFromPackageModals } from '../common/components';
 import { useRemoveFromPackage } from '../common/hooks';
+import { getPoLineExpectedReceiptDate } from '../common/utils';
 import {
   CENTRAL_RECEIVING_ROUTE,
   RECEIVING_ROUTE,
@@ -138,7 +139,7 @@ const TitleForm = ({
 
   const addInstance = form.mutators.setTitleValue;
   const addLines = form.mutators.setPOLine;
-  const { details, physical, isPackage } = get(values, 'poLine', {});
+  const { details, isPackage } = get(values, 'poLine', {});
 
   const onClaimingActiveChange = useCallback((event) => {
     const { target: { checked } } = event;
@@ -403,7 +404,7 @@ const TitleForm = ({
                         <Col xs={3}>
                           <KeyValue
                             label={<FormattedMessage id="ui-receiving.title.expectedReceiptDate" />}
-                            value={<FolioFormattedDate value={get(physical, 'expectedReceiptDate')} />}
+                            value={<FolioFormattedDate value={getPoLineExpectedReceiptDate(get(values, 'poLine'))} />}
                           />
                         </Col>
                         <Col xs={3}>

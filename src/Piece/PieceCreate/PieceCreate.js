@@ -9,6 +9,10 @@ import {
 
 import { PIECE_FORM_FIELD_NAMES } from '../../common/constants';
 import { useTitle } from '../../common/hooks';
+import {
+  getPieceExpectedReceiptDate,
+  getPoLineExpectedReceiptDate,
+} from '../../common/utils';
 import { useReceivingSearchContext } from '../../contexts';
 import { ORDER_FORMAT_TO_PIECE_FORMAT } from '../constants';
 import { PieceFormContainer } from '../PieceForm';
@@ -17,13 +21,11 @@ function getNewPieceValues(titleId, poLine, crossTenant) {
   const {
     orderFormat,
     id: poLineId,
-    physical,
     locations,
     checkinItems,
   } = (poLine || {});
 
   const initialValuesPiece = {
-    receiptDate: physical?.expectedReceiptDate,
     poLineId,
     titleId,
   };
@@ -31,6 +33,10 @@ function getNewPieceValues(titleId, poLine, crossTenant) {
   if (orderFormat !== ORDER_FORMATS.PEMix) {
     initialValuesPiece.format = ORDER_FORMAT_TO_PIECE_FORMAT[orderFormat];
   }
+
+  initialValuesPiece.receiptDate = initialValuesPiece.format
+    ? getPieceExpectedReceiptDate(poLine, initialValuesPiece.format)
+    : getPoLineExpectedReceiptDate(poLine);
 
   if (locations?.length === 1 && !crossTenant) {
     initialValuesPiece.locationId = locations[0].locationId;

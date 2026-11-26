@@ -5,6 +5,7 @@ export * from './getCentralOrderingReceivingTenantId';
 export * from './getDehydratedPiece';
 export * from './getHoldingsItemsAndPieces';
 export * from './getItemById';
+export * from './getPoLineExpectedReceiptDate';
 export * from './getReceivingPieceItemStatus';
 export * from './getHydratedPieces';
 export * from './handleCommonErrors';
